@@ -41,7 +41,31 @@ THE GREETING (THE 'AMANA')
 - After this one-line reaction, then continue with the normal structure: Identify Heirs →
 `;
 };
+const fetchIslamGPTContext = async (): Promise<string> => {
+  try {
+    const urls = [
+      "https://raw.githubusercontent.com/abdullahaamuda-code/islam_GPT/main/data/aqidah.txt",
+      "https://raw.githubusercontent.com/abdullahaamuda-code/islam_GPT/main/data/fiqh.txt",
+      "https://raw.githubusercontent.com/abdullahaamuda-code/islam_GPT/main/data/inheritance.txt",
+      "https://raw.githubusercontent.com/abdullahaamuda-code/islam_GPT/main/data/islamic_knowldege.txt",
+    ];
 
+    let combined = "";
+
+    for (const url of urls) {
+      const res = await fetch(url);
+      if (!res.ok) continue;
+      const text = await res.text();
+      // Trim each file so we don't explode tokens; you can adjust this later
+      combined += "\n\n" + text.slice(0, 3000);
+    }
+
+    return combined.trim();
+  } catch (e) {
+    console.error("Failed to fetch Islam_GPT context:", e);
+    return "";
+  }
+};
 export const getOpenRouterResponse = async (
   prompt: string,
   history: any[],
