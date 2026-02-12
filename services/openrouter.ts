@@ -2,10 +2,10 @@ import { UserProfile, LLMResponse } from "../types";
 
 // Fixed 4-stage free-model chain on OpenRouter (verified free Feb 2026)
 const OPENROUTER_MODELS = [
-  "qwen/qwen2.5-coder-32b-instruct:free",    // Fast coder/instruct main [web:29]
-  "deepseek/deepseek-r1-0528:free",          // Reasoning fallback 1 [web:23][web:29]
-  "mistral/mistral-small-3.2-24b:free",      // Efficient 96K ctx fallback 2 [web:23]
-  "meta-llama/llama-3.3-70b-instruct:free",  // Strong instruct fallback 3 [web:23]
+  "meta-llama/llama-3.2-11b-vision-instruct:free",
+  "qwen/qwen2.5-14b-instruct:free", 
+  "mistralai/mistral-nemo:free",
+  "google/gemini-2.0-flash-thinking-exp:free"
 ];
 
 const getSystemInstruction = (user: UserProfile | null) => {
