@@ -5,7 +5,7 @@ import { UserProfile, LLMResponse } from "../types";
 const OPENROUTER_MODELS = [
   "meta-llama/llama-3.1-8b-instruct:free",   // main fast/free [web:174]
   "meta-llama/llama-3.3-70b-instruct:free",  // stronger free tier [web:173]
-  "mistral/mistral-small-24b-instruct:free", // small 24B, free tier [web:173]
+  "deepseek/deepseek-v3-base:free", // small 24B, free tier [web:173]
 ];
 
 const getSystemInstruction = (user: UserProfile | null) => {
