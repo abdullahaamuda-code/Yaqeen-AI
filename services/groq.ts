@@ -1,14 +1,14 @@
 import { UserProfile, LLMResponse } from "../types";
+import { getSystemInstruction } from "./openrouter";  // ✅ FIX: Import this
 
-// Updated Groq models (free/fast Feb 2026)
 const GROQ_MODELS = [
-  "llama-3.3-70b-versatile",     // Primary 128K ctx
-  "llama-3.1-8b-instant",        // Fast 128K fallback 1
-  "mixtral-8x7b-32768",          // Reliable fallback 2
-  "gemma2-9b-it",                // Small/fast fallback 3
+  "llama3-70b-8192",      // Real Groq model names
+  "llama3-8b-8192",       // Real Groq model names  
+  "mixtral-8x7b-32768",
+  "gemma2-9b-it"
 ];
 
-const fetchIslamGPTContext = async (maxLength = 8000): Promise<string> => {  // FIXED: Hard limit
+const fetchIslamGPTContext = async (maxLength = 4000): Promise<string> => {
   try {
     const urls = [
       "https://raw.githubusercontent.com/abdullahaamuda-code/islam_GPT/main/data/aqidah.txt",
@@ -22,15 +22,14 @@ const fetchIslamGPTContext = async (maxLength = 8000): Promise<string> => {  // 
       try {
         const res = await fetch(url);
         if (!res.ok) continue;
-        let text = await res.text();
-        text = text.slice(0, 2000);  // FIXED: 2K max per file
+        const text = (await res.text()).slice(0, 1000);
         combined += `\n\n${text}`;
-        if (combined.length > maxLength) break;  // FIXED: Total cap
+        if (combined.length > maxLength) break;
       } catch {}
     }
     return combined.trim();
   } catch {
-    return "";  // Graceful fail
+    return "";
   }
 };
 
@@ -42,31 +41,19 @@ export const getGroqResponse = async (
   const apiKey = import.meta.env.VITE_GROQ_API_KEY;
   if (!apiKey) throw new Error("Groq API key not configured");
 
-  // FIXED: Smart context—skip if history long or files fail
-  const islamicContext = history.length < 5 ? await fetchIslamGPTContext(8000) : "";
-
-  const enhancedPrompt = islamicContext
-    ? `${prompt}\n\nTRUSTED ISLAMIC NOTES:\n${islamicContext}\n\nUse these as primary reference.`
+  const islamicContext = history.length < 3 ? await fetchIslamGPTContext() : "";
+  const enhancedPrompt = islamicContext 
+    ? `${prompt}\n\nTRUSTED NOTES:\n${islamicContext}` 
     : prompt;
 
-  // FIXED: Estimate payload ~chars/4 = tokens
-  const totalTokensEst = (getSystemInstruction(user).length + enhancedPrompt.length + 
-    history.reduce((sum, m) => sum + (m.parts?.[0]?.text?.length || 0), 0)) / 4;
-  
-  if (totalTokensEst > 100000) {  // FIXED: Early reject huge payloads
-    throw new Error("Payload too large—shorten history or prompt");
-  }
-
   const messages = [
-    { role: "system", content: getSystemInstruction(user) },
-    ...history.map((m: any) => ({
+    { role: "system", content: getSystemInstruction(user) },  // ✅ Now works
+    ...history.slice(-6).map((m: any) => ({
       role: m.role === "user" ? "user" : "assistant",
       content: m.parts?.[0]?.text || "",
-    })).slice(-10),  // FIXED: Last 10 msgs only (~128K safe)
+    })),
     { role: "user", content: enhancedPrompt },
   ];
-
-  let lastError: any = null;
 
   for (const model of GROQ_MODELS) {
     try {
@@ -80,31 +67,26 @@ export const getGroqResponse = async (
           model,
           messages,
           temperature: 0,
-          top_p: 1,
           max_tokens: 2048,
-          stream: false,
         }),
       });
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        console.error(`Groq ${model}: ${res.status}`, data.error?.message);
-        if (res.status === 413 || res.status === 400) continue;  // Skip oversized
-        if (res.status === 429) continue;  // Rate limit—try next
-        throw new Error(data.error?.message || `GROQ_ERROR_${res.status}`);
+        console.error(`Groq ${model}: ${res.status}`);
+        if ([413, 429, 400].includes(res.status)) continue;
+        throw new Error(`GROQ_ERROR_${res.status}`);
       }
 
       const data = await res.json();
       return {
-        text: data.choices?.[0]?.message?.content || "I encountered an error.",
+        text: data.choices?.[0]?.message?.content || "Error occurred.",
         webLinks: [],
       };
-    } catch (err: any) {
-      console.error("Groq fetch failed for", model, err.message);
-      lastError = err;
+    } catch (err) {
+      console.error("Groq failed:", model, err);
       continue;
     }
   }
-
-  throw lastError || new Error("All Groq models failed—check key/limits");
+  throw new Error("All Groq models failed");
 };
