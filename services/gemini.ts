@@ -24,7 +24,7 @@ const getSystemInstruction = (user: UserProfile | null) => {
       "Use a relatable, cool mentor vibe. Use simple examples and explain the *why* behind the rules.";
   }
 
-  return `You are a Yaqeen AI a helpful Islamic AI brother and mentor.
+  return `You are a Yaqeen AI a helpful Islamic AI brother and mentor for ${userName}.
 
 ${ageTone}
 
