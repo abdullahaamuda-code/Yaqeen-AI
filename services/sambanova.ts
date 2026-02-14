@@ -3,9 +3,9 @@ import { UserProfile, LLMResponse } from "../types";
 
 // Primary: Llama 3.1 405B
 const SAMBANOVA_MODELS = [
-  "sambanova/Meta-Llama-3.1-405B-Instruct",          // main 405B model [web:439][web:445]
+  "ALLaM-7B-Instruct-preview",          // main 405B model [web:439][web:445]
   "meta-llama/llama-3.1-405b-instruct:free",        // common free alias used by some clients [web:447]
-  "sambanova/Meta-Llama-3.1-70B-Instruct",          // strong fallback if 405B not available [web:438][web:440]
+  "Meta-Llama-3.3-70B-Instruct",          // strong fallback if 405B not available [web:438][web:440]
 ];
 
 const getSystemInstruction = (user: UserProfile | null) => {
