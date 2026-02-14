@@ -3,9 +3,9 @@ import { UserProfile, LLMResponse } from "../types";
 
 // Primary: Llama 3.1 405B
 const SAMBANOVA_MODELS = [
-  "DeepSeek‑V3‑0324",          // main 405B model [web:439][web:445]
-  "Qwen3‑235B",        // common free alias used by some clients [web:447]
-  "DeepSeek‑R1‑Distill‑Llama‑70B",          // strong fallback if 405B not available [web:438][web:440]
+  "DeepSeek-V3-0324",                 // main complex brain
+  "DeepSeek-R1-Distill-Llama-70B",    // reasoning-style fallback
+  "Qwen3-235B-A22B-Instruct-2507",    // huge Qwen fallback
 ];
 
 const getSystemInstruction = (user: UserProfile | null) => {
