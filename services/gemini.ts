@@ -1,11 +1,12 @@
+// src/services/gemini.ts
 import { GoogleGenAI } from "@google/genai";
 import { UserProfile, LLMResponse } from "../types";
 
 // 3-model chain for Gemini
 const GEMINI_MODELS = [
-  "gemini-3-flash-preview", // main [web:189][web:191]
-  "gemini-1.5-flash",       // fast, usually free tier [web:195]
-  "gemini-1.5-pro",         // stronger, may be paid [web:195]
+  "gemini-3-flash-preview", // main
+  "gemini-1.5-flash",       // fast, usually free tier
+  "gemini-1.5-pro",         // stronger, may be paid
 ];
 
 const getSystemInstruction = (user: UserProfile | null) => {
@@ -23,6 +24,8 @@ const getSystemInstruction = (user: UserProfile | null) => {
   }
 
   return `You are a Yaqeen AI a helpful Islamic AI brother and mentor.
+
+${ageTone}
 
 RULE #0 – CHARACTER SET
 - Use standard English characters ONLY.
@@ -60,8 +63,6 @@ THE LOGIC ENGINE (STRICT & MANDATORY FOR INHERITANCE)
 4. AL-AWL (OVERAGE RULE)
   - If the sum of all fixed shares exceeds 1 (for example, a husband with 1/2 plus 2 full sisters with 2/3), you MUST use Al-Awl.
   - Explain briefly that Al-Awl means proportionally reducing each share so the total becomes exactly 1.
-  - For a classic example, you can say:
-    - "In some cases, scholars adjusted the denominator so that all shares fit into the estate fairly."
 
 5. ASABAH
   - Asabah heirs (like sons or closest male relatives) take EVERYTHING left over after all fixed shares are paid.
@@ -103,8 +104,7 @@ THANK-YOU RESPONSES (STRICT)
 ADDRESSING THE USER
 - You are an AI brother and mentor.
 - Do NOT call the user "brother" or "sister" unless the user clearly asks you to use that word for them.
-- In most answers, just speak directly without using labels like "brother", "sister", or "dear friend".
-`;
+- In most answers, just speak directly without using labels like "brother", "sister", or "dear friend".`;
 };
 
 export const getGeminiResponse = async (
@@ -117,7 +117,7 @@ export const getGeminiResponse = async (
 
   const ai = new GoogleGenAI({ apiKey });
 
-  // Convert your history (already in Gemini format in App.tsx) and just change system each time
+  // history is already in Gemini content format from App.tsx
   const systemInstruction = getSystemInstruction(user);
 
   let lastError: any = null;
@@ -129,7 +129,7 @@ export const getGeminiResponse = async (
         contents: history,
         config: {
           systemInstruction,
-          temperature: 0.2, // same “precise fiqh” style as Groq/OpenRouter [web:194][web:197]
+          temperature: 0.2,
           topP: 0.5,
           maxOutputTokens: 2048,
           tools: [{ googleSearch: {} }],
@@ -137,7 +137,8 @@ export const getGeminiResponse = async (
       });
 
       const text =
-        (response as any).text || "I apologize, but I encountered an error.";
+        (response as any).text ||
+        "I apologize, but I encountered an error.";
 
       const webLinks =
         (response as any).candidates?.[0]?.groundingMetadata?.groundingChunks
