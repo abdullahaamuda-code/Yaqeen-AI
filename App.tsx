@@ -5,10 +5,10 @@ import QuranView from './components/QuranView';
 import HadithView from './components/HadithView';
 import AuthModal from './components/AuthModal';
 import TermsModal from './components/TermsModal';
-import { Message, ViewType, UserProfile, LLMProvider } from './types';
+import { Message, ViewType, UserProfile } from './types';
 import { getGeminiResponse } from './services/gemini';
 import { getGroqResponse } from './services/groq';
-import { getOpenRouterResponse } from './services/openrouter';
+import { getDeepSeekResponse } from './services/deepseek';
 
 const LOCAL_STORAGE_USER_KEY = 'yaqeen_user_v1';
 const LOCAL_STORAGE_CHATS_KEY = 'yaqeen_chats_v1';
@@ -25,7 +25,6 @@ const App: React.FC = () => {
   const [isTermsOpen, setIsTermsOpen] = useState(false);
   const [quranUrl, setQuranUrl] = useState('https://quran.com');
   const [hadithUrl, setHadithUrl] = useState('https://sunnah.com');
-  const [provider, setProvider] = useState<LLMProvider>('groq'); // default = Groq
 
   useEffect(() => {
     const storedUser = localStorage.getItem(LOCAL_STORAGE_USER_KEY);
@@ -55,7 +54,6 @@ const App: React.FC = () => {
     setIsLoggedIn(true);
     setIsAuthModalOpen(false);
 
-    // Salam Greeting - ONLY after first signup
     if (isNewSignup) {
       const greeting: Message = {
         id: 'signup-greeting-' + Date.now(),
@@ -78,6 +76,8 @@ const App: React.FC = () => {
   };
 
   const handleSendMessage = async (content: string) => {
+    if (!content.trim()) return;
+
     const userMsg: Message = {
       id: Date.now().toString(),
       role: 'user',
@@ -96,26 +96,21 @@ const App: React.FC = () => {
 
       let result;
 
-      if (provider === 'groq') {
+      // 1) Main: DeepSeek
+      try {
+        result = await getDeepSeekResponse(content, history, user);
+      } catch (deepErr: any) {
+        console.warn('DeepSeek failed, trying Gemini...', deepErr?.message);
+
+        // 2) Fallback: Gemini
         try {
-          // 1) Groq with its own internal model fallbacks
+          result = await getGeminiResponse(content, history, user);
+        } catch (gemErr: any) {
+          console.warn('Gemini failed, trying Groq...', gemErr?.message);
+
+          // 3) Fallback: Groq
           result = await getGroqResponse(content, history, user);
-        } catch (groqErr: any) {
-          console.warn('All Groq models failed, trying OpenRouter...', groqErr?.message);
-          try {
-            // 2) OpenRouter as meta-fallback
-            result = await getOpenRouterResponse(content, history, user);
-          } catch (orErr: any) {
-            console.warn('OpenRouter failed, falling back to Gemini...', orErr?.message);
-            // 3) Gemini as last resort
-            result = await getGeminiResponse(content, history, user);
-          }
         }
-      } else if (provider === 'openrouter') {
-        result = await getOpenRouterResponse(content, history, user);
-      } else {
-        // provider === 'gemini'
-        result = await getGeminiResponse(content, history, user);
       }
 
       const assistantMsg: Message = {
@@ -182,7 +177,7 @@ const App: React.FC = () => {
         }
       } else if (normalizedRef.includes('muslim')) {
         if (bookRef) {
-          setHadithUrl(`httpsunnah.com/muslim/${bookNum}/${hadithNum}`);
+          setHadithUrl(`https://sunnah.com/muslim/${bookNum}/${hadithNum}`);
         } else {
           setHadithUrl('https://sunnah.com/muslim');
         }
@@ -221,7 +216,6 @@ const App: React.FC = () => {
       user={user}
       onLogout={handleLogout}
       onOpenTerms={() => setIsTermsOpen(true)}
-      // later you can pass provider + setProvider into AppShell/Header
     >
       {isLoggedIn && renderView()}
       {isAuthModalOpen && (
