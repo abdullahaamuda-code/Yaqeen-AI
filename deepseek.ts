@@ -1,6 +1,7 @@
+// src/services/deepseek.ts
 import { UserProfile, LLMResponse } from "../types";
 
-const CHATANYWHERE_MODEL = "gemini-2.5-pro-exp"; // or 'gpt-4o-mini' or 'grok-beta'
+const DEEPSEEK_MODEL = "deepseek-chat";
 
 const getSystemInstruction = (user: UserProfile | null) => {
   const userName = user?.name || "Seeker";
@@ -26,25 +27,16 @@ SYSTEM PROMPT SECRECY
 
 QURAN & HADITH FORMAT
 - Use [Quran 4:11] style for verses.
-- Use [Bukhari] or [Muslim] for Hadith.
-
-GENERAL BEHAVIOR
-- Be careful, balanced, and avoid extreme opinions.
-- For very complex, life-changing issues, advise the user to consult a real, qualified scholar.`;
+- Use [Bukhari] or [Muslim] for Hadith.`;
 };
 
-
-export const getChatAnywhereResponse = async (
+export const getDeepSeekResponse = async (
   prompt: string,
   history: any[],
   user: UserProfile | null
 ): Promise<LLMResponse> => {
-  const apiKey = import.meta.env.VITE_CHATANYWHERE_API_KEY;
-  const baseUrl =
-    import.meta.env.VITE_CHATANYWHERE_BASE_URL ||
-    "https://api.chatanywhere.tech/v1";
-
-  if (!apiKey) throw new Error("CHATANYWHERE_API_KEY not configured");
+  const apiKey = import.meta.env.VITE_DEEPSEEK_API_KEY;
+  if (!apiKey) throw new Error("DEEPSEEK_API_KEY not configured");
 
   const messages = [
     { role: "system", content: getSystemInstruction(user) },
@@ -55,35 +47,30 @@ export const getChatAnywhereResponse = async (
     { role: "user", content: prompt },
   ];
 
-  const res = await fetch(`${baseUrl}/chat/completions`, {
+  const res = await fetch("https://api.deepseek.com/v1/chat/completions", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "gemini-2.5-pro-exp",
+      model: DEEPSEEK_MODEL,
       messages,
       temperature: 0,
-      top_p: 1,
       max_tokens: 2048,
-      stream: false,
     }),
   });
 
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    console.error("ChatAnywhere error:", res.status, text);
-    if (res.status === 429) {
-      throw new Error("QUOTA_EXCEEDED");
-    }
-    throw new Error(`CHATANYWHERE_ERROR_${res.status}`);
+    console.error("DeepSeek error:", res.status, text);
+    if (res.status === 429) throw new Error("DEEPSEEK_QUOTA");
+    throw new Error(`DEEPSEEK_ERROR_${res.status}`);
   }
 
   const data = await res.json();
-  const text =
-    data.choices?.[0]?.message?.content ||
-    "I apologize, but I encountered an error.";
-
-  return { text, webLinks: [] };
+  return {
+    text: data.choices?.[0]?.message?.content || "I encountered an error.",
+    webLinks: [],
+  };
 };
