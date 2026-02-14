@@ -77,7 +77,7 @@ const App: React.FC = () => {
     setIsAuthModalOpen(true);
   };
 
-  const handleSendMessage = async (content: string) => {
+const handleSendMessage = async (content: string) => {
   if (!content.trim()) return;
 
   const userMsg: Message = {
@@ -101,38 +101,30 @@ const App: React.FC = () => {
 
     if (complex) {
       // COMPLEX QUESTIONS:
-      // 1) SambaNova → 2) Gemini → 3) Groq
+      // 1) Gemini (rotating keys) → 2) SambaNova → 3) Groq
       try {
-        result = await getSambaNovaResponse(content, history, user);
-      } catch (snErr: any) {
-        console.warn('SambaNova failed, trying Gemini...', snErr?.message);
+        result = await getGeminiResponse(content, history, user);
+      } catch (gemErr: any) {
+        console.warn('Gemini failed (complex), trying SambaNova...', gemErr?.message);
         try {
-          result = await getGeminiResponse(content, history, user);
-        } catch (gemErr: any) {
-          console.warn('Gemini failed, trying Groq...', gemErr?.message);
+          result = await getSambaNovaResponse(content, history, user);
+        } catch (snErr: any) {
+          console.warn('SambaNova failed (complex), trying Groq...', snErr?.message);
           result = await getGroqResponse(content, history, user);
         }
       }
     } else {
-      // SIMPLE QUESTIONS:
-      // Randomise a bit so not always the same engine
-      const rand = Math.random();
-
-      if (rand < 0.7) {
-        // 70% of the time → Groq first, Gemini backup
-        try {
-          result = await getGroqResponse(content, history, user);
-        } catch (groqErr: any) {
-          console.warn('Groq failed (simple), trying Gemini...', groqErr?.message);
-          result = await getGeminiResponse(content, history, user);
-        }
-      } else {
-        // 30% of the time → Gemini first, Groq backup
+      // SIMPLE QUESTIONS (Option B):
+      // 1) Groq → 2) Gemini → 3) SambaNova
+      try {
+        result = await getGroqResponse(content, history, user);
+      } catch (groqErr: any) {
+        console.warn('Groq failed (simple), trying Gemini...', groqErr?.message);
         try {
           result = await getGeminiResponse(content, history, user);
         } catch (gemErr: any) {
-          console.warn('Gemini failed (simple), trying Groq...', gemErr?.message);
-          result = await getGroqResponse(content, history, user);
+          console.warn('Gemini failed (simple), trying SambaNova...', gemErr?.message);
+          result = await getSambaNovaResponse(content, history, user);
         }
       }
     }
@@ -179,6 +171,7 @@ const App: React.FC = () => {
     setIsLoading(false);
   }
 };
+
 
 
   const handleReferenceClick = (type: 'quran' | 'hadith', ref: string) => {
