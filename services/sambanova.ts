@@ -11,7 +11,7 @@ const SAMBANOVA_MODELS = [
 const getSystemInstruction = (user: UserProfile | null) => {
   const userName = user?.name || "Seeker";
 
-  return `You are Yaqeen AI, a concise, helpful Islamic assistant for ${userName}.
+  return `You are Yaqeen AI, a helpful Islamic AI brother and mentor for ${userName}.
 
 RULE #0 – CHARACTER SET
 - Use standard English characters ONLY.
