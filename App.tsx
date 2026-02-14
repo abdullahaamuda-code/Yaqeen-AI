@@ -76,85 +76,108 @@ const App: React.FC = () => {
   };
 
   const handleSendMessage = async (content: string) => {
-    if (!content.trim()) return;
+  if (!content.trim()) return;
 
-    const userMsg: Message = {
-      id: Date.now().toString(),
-      role: 'user',
-      content,
-      timestamp: Date.now(),
-    };
-    const newMessages = [...messages, userMsg];
-    setMessages(newMessages);
-    setIsLoading(true);
+  const userMsg: Message = {
+    id: Date.now().toString(),
+    role: 'user',
+    content,
+    timestamp: Date.now(),
+  };
+  const newMessages = [...messages, userMsg];
+  setMessages(newMessages);
+  setIsLoading(true);
 
-    try {
-      const history = newMessages.slice(-10).map((m) => ({
-        role: m.role === 'user' ? 'user' : 'model',
-        parts: [{ text: m.content }],
-      }));
+  try {
+    const history = newMessages.slice(-10).map((m) => ({
+      role: m.role === 'user' ? 'user' : 'model',
+      parts: [{ text: m.content }],
+    }));
 
-      let result;
+    const complex = isComplexQuestion(content);
+    let result;
 
-      // 1) Main: DeepSeek
+    if (complex) {
+      // COMPLEX QUESTIONS:
+      // 1) SambaNova → 2) Gemini → 3) Groq
       try {
-        result = await getDeepSeekResponse(content, history, user);
-      } catch (deepErr: any) {
-        console.warn('DeepSeek failed, trying Gemini...', deepErr?.message);
-
-        // 2) Fallback: Gemini
+        result = await getSambaNovaResponse(content, history, user);
+      } catch (snErr: any) {
+        console.warn('SambaNova failed, trying Gemini...', snErr?.message);
         try {
           result = await getGeminiResponse(content, history, user);
         } catch (gemErr: any) {
           console.warn('Gemini failed, trying Groq...', gemErr?.message);
-
-          // 3) Fallback: Groq
           result = await getGroqResponse(content, history, user);
         }
       }
+    } else {
+      // SIMPLE QUESTIONS:
+      // Randomise a bit so not always the same engine
+      const rand = Math.random();
 
-      const assistantMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: result.text,
-        webLinks: result.webLinks,
-        timestamp: Date.now(),
-      };
-
-      const finalMessages = [...newMessages, assistantMsg];
-      setMessages(finalMessages);
-      localStorage.setItem(LOCAL_STORAGE_CHATS_KEY, JSON.stringify(finalMessages));
-    } catch (err: any) {
-      console.error(err);
-
-      let errorText =
-        'Something went wrong while processing this request. Please try again in a few moments, in shaa’ Allah.';
-
-      if (err.message === 'QUOTA_EXCEEDED') {
-        errorText =
-          'Yaqeen AI is currently experiencing high load and cannot answer right now. Please try again in a little while, in shaa’ Allah.';
-      } else if (
-        err.name === 'TypeError' ||
-        err.message?.toLowerCase().includes('fetch') ||
-        err.message?.toLowerCase().includes('network') ||
-        err.message?.toLowerCase().includes('connect')
-      ) {
-        errorText =
-          'I’m having trouble connecting at the moment. Please check your internet connection or try again shortly, in shaa’ Allah.';
+      if (rand < 0.7) {
+        // 70% of the time → Groq first, Gemini backup
+        try {
+          result = await getGroqResponse(content, history, user);
+        } catch (groqErr: any) {
+          console.warn('Groq failed (simple), trying Gemini...', groqErr?.message);
+          result = await getGeminiResponse(content, history, user);
+        }
+      } else {
+        // 30% of the time → Gemini first, Groq backup
+        try {
+          result = await getGeminiResponse(content, history, user);
+        } catch (gemErr: any) {
+          console.warn('Gemini failed (simple), trying Groq...', gemErr?.message);
+          result = await getGroqResponse(content, history, user);
+        }
       }
-
-      const errorMsg: Message = {
-        id: 'error-' + Date.now(),
-        role: 'assistant',
-        content: errorText,
-        timestamp: Date.now(),
-      };
-      const finalMessages = [...newMessages, errorMsg];
-      setMessages(finalMessages);
-    } finally {
-      setIsLoading(false);
     }
-  };
+
+    const assistantMsg: Message = {
+      id: (Date.now() + 1).toString(),
+      role: 'assistant',
+      content: result.text,
+      webLinks: result.webLinks,
+      timestamp: Date.now(),
+    };
+
+    const finalMessages = [...newMessages, assistantMsg];
+    setMessages(finalMessages);
+    localStorage.setItem(LOCAL_STORAGE_CHATS_KEY, JSON.stringify(finalMessages));
+  } catch (err: any) {
+    console.error(err);
+
+    let errorText =
+      'Something went wrong while processing this request. Please try again in a few moments, in shaa’ Allah.';
+
+    if (err.message === 'QUOTA_EXCEEDED') {
+      errorText =
+        'Yaqeen AI is currently experiencing high load and cannot answer right now. Please try again in a little while, in shaa’ Allah.';
+    } else if (
+      err.name === 'TypeError' ||
+      err.message?.toLowerCase().includes('fetch') ||
+      err.message?.toLowerCase().includes('network') ||
+      err.message?.toLowerCase().includes('connect')
+    ) {
+      errorText =
+        'I’m having trouble connecting at the moment. Please check your internet connection or try again shortly, in shaa’ Allah.';
+    }
+
+    const errorMsg: Message = {
+      id: 'error-' + Date.now(),
+      role: 'assistant',
+      content: errorText,
+      timestamp: Date.now(),
+    };
+    const finalMessages = [...newMessages, errorMsg];
+    setMessages(finalMessages);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   const handleReferenceClick = (type: 'quran' | 'hadith', ref: string) => {
     if (type === 'quran') {
