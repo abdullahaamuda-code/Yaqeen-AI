@@ -174,44 +174,47 @@ const handleSendMessage = async (content: string) => {
 
 
 
-  const handleReferenceClick = (type: 'quran' | 'hadith', ref: string) => {
-    if (type === 'quran') {
-      const parts = ref.split(':');
-      const surah = parts[0];
-      const verse = parts[1];
-      setQuranUrl(`https://quran.com/${surah}${verse ? `/${verse}` : ''}`);
-      setActiveView('quran');
-    } } else {
-  const normalizedRef = ref.toLowerCase();
+const handleReferenceClick = (type: 'quran' | 'hadith', ref: string) => {
+  if (type === 'quran') {
+    const parts = ref.split(':');
+    const surah = parts[0];
+    const verse = parts[1];
 
-  // Try to find something like 3:45 OR 3/45
-  const partsMatch = ref.match(/(\d+)[/:](\d+)/);
-  let bookNum = "";
-  let hadithNum = "";
-
-  if (partsMatch) {
-    bookNum = partsMatch[1];
-    hadithNum = partsMatch[2];
-  }
-
-  if (normalizedRef.includes("bukhari")) {
-    if (bookNum && hadithNum) {
-      setHadithUrl(`https://sunnah.com/bukhari/${bookNum}/${hadithNum}`);
-    } else {
-      setHadithUrl("https://sunnah.com/bukhari");
-    }
-  } else if (normalizedRef.includes("muslim")) {
-    if (bookNum && hadithNum) {
-      setHadithUrl(`https://sunnah.com/muslim/${bookNum}/${hadithNum}`);
-    } else {
-      setHadithUrl("https://sunnah.com/muslim");
-    }
+    setQuranUrl(`https://quran.com/${surah}${verse ? `/${verse}` : ''}`);
+    setActiveView('quran');
   } else {
-    setHadithUrl("https://sunnah.com");
-  }
+    const normalizedRef = ref.toLowerCase();
 
-  setActiveView("hadith");
-}
+    // Try to find something like 3:45 or 3/45
+    const partsMatch = ref.match(/(\d+)[/:](\d+)/);
+    let bookNum = '';
+    let hadithNum = '';
+
+    if (partsMatch) {
+      bookNum = partsMatch[1];
+      hadithNum = partsMatch[2];
+    }
+
+    if (normalizedRef.includes('bukhari')) {
+      if (bookNum && hadithNum) {
+        setHadithUrl(`https://sunnah.com/bukhari/${bookNum}/${hadithNum}`);
+      } else {
+        setHadithUrl('https://sunnah.com/bukhari');
+      }
+    } else if (normalizedRef.includes('muslim')) {
+      if (bookNum && hadithNum) {
+        setHadithUrl(`https://sunnah.com/muslim/${bookNum}/${hadithNum}`);
+      } else {
+        setHadithUrl('https://sunnah.com/muslim');
+      }
+    } else {
+      setHadithUrl('https://sunnah.com');
+    }
+
+    setActiveView('hadith');
+  }
+};
+
 
 
   const renderView = () => {
