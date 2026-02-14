@@ -6,9 +6,11 @@ import HadithView from './components/HadithView';
 import AuthModal from './components/AuthModal';
 import TermsModal from './components/TermsModal';
 import { Message, ViewType, UserProfile } from './types';
+import { getSambaNovaResponse } from './services/sambanova';
 import { getGeminiResponse } from './services/gemini';
 import { getGroqResponse } from './services/groq';
-import { getDeepSeekResponse } from './services/deepseek';
+import { isComplexQuestion } from './utils/classifyQuestion';
+
 
 const LOCAL_STORAGE_USER_KEY = 'yaqeen_user_v1';
 const LOCAL_STORAGE_CHATS_KEY = 'yaqeen_chats_v1';
