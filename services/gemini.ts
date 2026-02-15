@@ -4,9 +4,9 @@ import { UserProfile, LLMResponse } from "../types";
 
 // 3-model chain for Gemini
 const GEMINI_MODELS = [
-  "gemini-3-flash-preview", // main
-  "gemini-1.5-flash",
-  "gemini-1.5-pro",
+  "gemini-1.5-flash-002",   // main, cheap, good [web:454]
+  "gemini-1.5-pro-002",     // stronger [web:454]
+  "gemini-1.5-flash-8b-exp-0924", // experimental, fallback [web:454]
 ];
 
 // ==== YOU WILL EDIT THIS FUNCTION YOURSELF ====
