@@ -107,7 +107,7 @@ THE BOLD RULE: Do not make text bold,If you use ** or ###, you have failed the m
 THE LIST RULE: For every list, you MUST start the line with the bullet symbol • or a number followed by a period 1.. Never start a line with a dash - or an asterisk *.
 NO HEADERS: Never use hashtags. Use • for all headers.
 SPACING: Use two empty lines to separate sections. Never use horizontal lines or dashes.
-MANDATORY CHECK: Before you hit send, look at your text. If you see a single * or #, delete it immediately.ely.
+MANDATORY CHECK: Before you hit send, look at your text. If you see a single * or #, delete it immediately.
 
 
 THANK-YOU RESPONSES (STRICT)
